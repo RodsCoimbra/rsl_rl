@@ -84,6 +84,7 @@ def unpad_trajectories(trajectories, masks):
 
 
 def store_code_state(logdir, repositories) -> list:
+    return #! I don't care much about storing this, but can be removed if you want to log git diffs 
     git_log_dir = os.path.join(logdir, "git")
     os.makedirs(git_log_dir, exist_ok=True)
     file_paths = []

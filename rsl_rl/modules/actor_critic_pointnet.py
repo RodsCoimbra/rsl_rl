@@ -129,14 +129,14 @@ class ActorCriticPointNet(nn.Module):
 
 
 class AgentPointNetMLP(nn.Module):
-    def __init__(self, proprioception_size, latent_dim, output_size):
+    def __init__(self, input_size, latent_dim, output_size):
         super().__init__()
-        self.proprioception_size = proprioception_size
+        self.input_size = input_size
         
         self.pointnet = PointNetEncoder(latent_dim=latent_dim)
         
         self.mlp = nn.Sequential(
-            nn.Linear(proprioception_size + latent_dim, 256),
+            nn.Linear(input_size + latent_dim, 256),
             nn.ELU(),
             nn.Linear(256, 128),
             nn.ELU(),
@@ -144,8 +144,8 @@ class AgentPointNetMLP(nn.Module):
         )
     
     def forward(self, x):
-        proprioception = x[:, :self.proprioception_size]
-        points = x[:, self.proprioception_size:]
+        proprioception = x[:, :self.input_size]
+        points = x[:, self.input_size:]
         latent_points = self.pointnet(points)
         mlp_input = torch.cat((proprioception, latent_points), dim=1)
         

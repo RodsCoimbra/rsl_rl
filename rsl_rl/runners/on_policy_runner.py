@@ -103,10 +103,19 @@ class OnPolicyRunner:
         self.save_interval = self.cfg["save_interval"]
         self.empirical_normalization = self.cfg["empirical_normalization"]
         if self.empirical_normalization:
-            self.obs_normalizer = EmpiricalNormalization(shape=[num_obs], until=1.0e8).to(self.device)
-            self.privileged_obs_normalizer = EmpiricalNormalization(shape=[num_privileged_obs], until=1.0e8).to(
-                self.device
-            )
+            if isinstance(self.alg.policy, ActorCriticPointNet):
+                obs_size = self.alg.policy.actor.input_size
+                obs_privileged_size = self.alg.policy.critic.input_size
+                self.obs_normalizer = EmpiricalNormalization(shape=[obs_size], until=1.0e8).to(self.device)
+                self.privileged_obs_normalizer = EmpiricalNormalization(shape=[obs_privileged_size], until=1.0e8).to(
+                    self.device
+                )
+                
+            else:
+                self.obs_normalizer = EmpiricalNormalization(shape=[num_obs], until=1.0e8).to(self.device)
+                self.privileged_obs_normalizer = EmpiricalNormalization(shape=[num_privileged_obs], until=1.0e8).to(
+                    self.device
+                )
         else:
             self.obs_normalizer = torch.nn.Identity().to(self.device)  # no normalization
             self.privileged_obs_normalizer = torch.nn.Identity().to(self.device)  # no normalization

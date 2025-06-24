@@ -26,6 +26,7 @@ class EmpiricalNormalization(nn.Module):
         super().__init__()
         self.eps = eps
         self.until = until
+        self.shape = shape[0] if isinstance(shape, (list, tuple)) else shape
         self.register_buffer("_mean", torch.zeros(shape).unsqueeze(0))
         self.register_buffer("_var", torch.ones(shape).unsqueeze(0))
         self.register_buffer("_std", torch.ones(shape).unsqueeze(0))
@@ -48,15 +49,19 @@ class EmpiricalNormalization(nn.Module):
         Returns:
             ndarray or Variable: Normalized output values
         """
-
+        x_scaled = x[:, :self.shape]
+        x_rest = x[:, self.shape:]
         if self.training:
-            self.update(x)
-        return (x - self._mean) / (self._std + self.eps)
+            self.update(x_scaled)
+        x_scaled = (x_scaled - self._mean) / (self._std + self.eps)
+        return torch.cat((x_scaled, x_rest), dim=1)
+        # if self.training:
+        #     self.update(x)
+        # return (x - self._mean) / (self._std + self.eps)
 
     @torch.jit.unused
     def update(self, x):
         """Learn input values without computing the output values of them"""
-
         if self.until is not None and self.count >= self.until:
             return
 
@@ -73,7 +78,13 @@ class EmpiricalNormalization(nn.Module):
 
     @torch.jit.unused
     def inverse(self, y):
-        return y * (self._std + self.eps) + self._mean
+        print("y.shape={}".format(y.shape))
+        raise NotImplementedError("Inverse normalization is not implemented for EmpiricalNormalization.")
+        # y_scaled = y[:, :self.shape] #? This is what should be used if this function is used
+        # y_rest = y[:, self.shape:]
+        # y_scaled = y_scaled * (self._std + self.eps) + self._mean
+        # return torch.cat((y_scaled, y_rest), dim=1)
+        # return y * (self._std + self.eps) + self._mean #! This line was what was before
 
 
 class EmpiricalDiscountedVariationNormalization(nn.Module):
