@@ -307,6 +307,8 @@ class OnPolicyRunner:
 
         # -- Episode info
         ep_string = ""
+        termination_values = {}
+        num_envs = locs["num_envs"]
         if locs["ep_infos"]:
             for key in locs["ep_infos"][0]:
                 infotensor = torch.tensor([], device=self.device)
@@ -320,13 +322,24 @@ class OnPolicyRunner:
                         ep_info[key] = ep_info[key].unsqueeze(0)
                     infotensor = torch.cat((infotensor, ep_info[key].to(self.device)))
                 value = torch.mean(infotensor)
+                if key.startswith("Episode_Termination/"):
+                    termination_values[key] = value
+                    continue
+                elif key.startswith("num_envs"):
+                    num_envs = value
                 # log to logger and terminal
                 if "/" in key:
                     self.writer.add_scalar(key, value, locs["it"])
                     ep_string += f"""{f'{key}:':>{pad}} {value:.4f}\n"""
                 else:
-                    self.writer.add_scalar("Episode/" + key, value, locs["it"])
+                    self.writer.add_scalar("Episode " + key, value, locs["it"])
                     ep_string += f"""{f'Mean episode {key}:':>{pad}} {value:.4f}\n"""
+
+
+        for key, value in termination_values.items():
+            value = (value*100) / num_envs  
+            self.writer.add_scalar(key, value, locs["it"])
+            ep_string += f"""{f'Termination {key}:':>{pad}} {value:.4f}\n"""
 
         mean_std = self.alg.policy.action_std.mean()
         fps = int(collection_size / (locs["collection_time"] + locs["learn_time"]))
