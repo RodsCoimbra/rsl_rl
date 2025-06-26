@@ -332,11 +332,11 @@ class OnPolicyRunner:
                     ep_string += f"""{f'{key}:':>{pad}} {value:.4f}\n"""
                     
                 elif key == "num_envs":
-                    self.writer.add_scalar("Episode " + key, num_envs, locs["it"])
+                    self.writer.add_scalar("Episode/" + key, num_envs, locs["it"])
                     ep_string += f"""{f'Number of Environments:':>{pad}} {num_envs}\n"""
                     
                 else:
-                    self.writer.add_scalar("Episode " + key, value, locs["it"])
+                    self.writer.add_scalar("Episode/" + key, value, locs["it"])
                     ep_string += f"""{f'Mean episode {key}:':>{pad}} {value:.2f}\n"""
 
         mean_envs = torch.mean(torch.tensor([x["num_envs"] for x in locs["ep_infos"]]))
