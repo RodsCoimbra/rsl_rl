@@ -158,10 +158,13 @@ class PointNetEncoder(nn.Module):
         self.pointnet_mlps = nn.Sequential(
             nn.Linear(6, 64),  # Input: (B, N, 6)
             nn.ELU(),
+            nn.LayerNorm(64),
             nn.Linear(64, 128),
             nn.ELU(),
+            nn.LayerNorm(128),
             nn.Linear(128, 128),
-            nn.ELU()
+            nn.ELU(),
+            nn.LayerNorm(128),
         )
         
         self.final = nn.Sequential(
