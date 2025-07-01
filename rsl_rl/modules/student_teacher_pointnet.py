@@ -17,10 +17,12 @@ class StudentTeacherPointNet(nn.Module):
         num_student_obs,
         num_teacher_obs,
         num_actions,
-        student_hidden_dims=[256, 128, 64],
-        activation="elu", 
+        encoder_lidar_dims=[64, 32, 32],
+        student_hidden_dims=[400, 200],
         init_noise_std=0.1,
-        proprioception_space = None,
+        proprioception_space_student=None,
+        lidar_space_student=None,
+        proprioception_space_teacher=None,
         latent_dim: int = 32,
         **kwargs,
     ):
@@ -36,19 +38,16 @@ class StudentTeacherPointNet(nn.Module):
         mlp_input_dim_s = num_student_obs
         
         # student
-        student_layers = []
-        student_layers.append(nn.Linear(mlp_input_dim_s, student_hidden_dims[0]))
-        student_layers.append(activation)
-        for layer_index in range(len(student_hidden_dims)):
-            if layer_index == len(student_hidden_dims) - 1:
-                student_layers.append(nn.Linear(student_hidden_dims[layer_index], num_actions))
-            else:
-                student_layers.append(nn.Linear(student_hidden_dims[layer_index], student_hidden_dims[layer_index + 1]))
-                student_layers.append(activation)
-        self.student = nn.Sequential(*student_layers)
+        self.student = StudentPointNetMLP(
+            proprioception_space_student, 
+            encoder_lidar_dims, 
+            student_hidden_dims, 
+            num_actions,
+            lidar_space_student
+        )
 
         # teacher
-        self.teacher = AgentPointNetMLP(proprioception_space, latent_dim, num_actions)
+        self.teacher = AgentPointNetMLP(proprioception_space_teacher, latent_dim, num_actions)
         self.teacher.eval()
 
 
@@ -197,3 +196,43 @@ class PointNetEncoder(nn.Module):
         x = x.masked_fill(padding_mask, -1e9)
         x, _ = torch.max(x, dim=1)    # (Num_envs,256)
         return self.final(x)  # (Num_envs,latent_dim)
+
+class StudentPointNetMLP(nn.Module):
+    def __init__(self, input_size, encoder_lidar_dims, student_hidden_dims, num_actions, lidar_space_student):
+        super().__init__()
+        self.input_size = input_size
+        activation_function = nn.ELU()
+        
+        # Lidar Encoder
+        encoder_layers = []
+        encoder_layers.append(nn.Linear(lidar_space_student, encoder_lidar_dims[0]))
+        encoder_layers.append(activation_function)
+        for layer_idx in range(len(encoder_lidar_dims)):
+            if layer_idx == len(encoder_lidar_dims) - 1:
+                continue
+            encoder_layers.append(nn.Linear(encoder_lidar_dims[layer_idx], encoder_lidar_dims[layer_idx + 1]))
+            encoder_layers.append(activation_function)
+            
+        self.lidar_encoder = nn.Sequential(*encoder_layers)
+        
+        
+        # Student MLP
+        student_layers = []
+        student_layers.append(nn.Linear(input_size + encoder_lidar_dims[-1] , student_hidden_dims[0]))
+        student_layers.append(activation_function)
+        
+        for layer_index in range(len(student_hidden_dims)):
+            if layer_index == len(student_hidden_dims) - 1:
+                student_layers.append(nn.Linear(student_hidden_dims[layer_index], num_actions))
+            else:
+                student_layers.append(nn.Linear(student_hidden_dims[layer_index], student_hidden_dims[layer_index + 1]))
+                student_layers.append(activation_function)
+        
+        self.student_mlp = nn.Sequential(*student_layers)
+    
+    def forward(self, x):
+        proprioception = x[:, :self.input_size]
+        distances_lidar = x[:, self.input_size:]
+        lidar_latent = self.lidar_encoder(distances_lidar)
+        mlp_input = torch.cat([proprioception, lidar_latent], dim=1)
+        return self.student_mlp(mlp_input)

@@ -21,6 +21,7 @@ from rsl_rl.modules import (
     EmpiricalNormalization,
     StudentTeacher,
     StudentTeacherRecurrent,
+    StudentTeacherPointNet,
 )
 from rsl_rl.utils import store_code_state
 
@@ -70,7 +71,7 @@ class OnPolicyRunner:
 
         # evaluate the policy class
         policy_class = eval(self.policy_cfg.pop("class_name"))
-        policy: ActorCritic | ActorCriticRecurrent | ActorCriticPointNet | StudentTeacher | StudentTeacherRecurrent = policy_class(
+        policy: ActorCritic | ActorCriticRecurrent | ActorCriticPointNet | StudentTeacher | StudentTeacherRecurrent | StudentTeacherPointNet = policy_class(
             num_obs, num_privileged_obs, self.env.num_actions, **self.policy_cfg
         ).to(self.device)
 
