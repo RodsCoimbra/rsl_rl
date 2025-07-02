@@ -9,14 +9,14 @@ import torch.nn as nn
 import torch.optim as optim
 
 # rsl-rl
-from rsl_rl.modules import StudentTeacher, StudentTeacherRecurrent
+from rsl_rl.modules import StudentTeacher, StudentTeacherRecurrent, StudentTeacherPointNet
 from rsl_rl.storage import RolloutStorage
 
 
 class Distillation:
     """Distillation algorithm for training a student model to mimic a teacher model."""
 
-    policy: StudentTeacher | StudentTeacherRecurrent
+    policy: StudentTeacher | StudentTeacherRecurrent | StudentTeacherPointNet
     """The student teacher model."""
 
     def __init__(

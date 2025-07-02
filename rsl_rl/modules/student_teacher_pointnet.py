@@ -35,8 +35,6 @@ class StudentTeacherPointNet(nn.Module):
 
         self.loaded_teacher = False  # indicates if teacher has been loaded
 
-        mlp_input_dim_s = num_student_obs
-        
         # student
         self.student = StudentPointNetMLP(
             proprioception_space_student, 

@@ -111,7 +111,14 @@ class OnPolicyRunner:
                 self.privileged_obs_normalizer = EmpiricalNormalization(shape=[obs_privileged_size], until=1.0e8).to(
                     self.device
                 )
-            #TODO: INSTANCE of StudentTeacherPointNet
+            
+            elif isinstance(self.alg.policy, (StudentTeacherPointNet)):
+                self.obs_normalizer = EmpiricalNormalization(shape=[num_obs], until=1.0e8).to(self.device)
+                obs_privileged_size = self.alg.policy.teacher.input_size
+                self.privileged_obs_normalizer = EmpiricalNormalization(shape=[obs_privileged_size], until=1.0e8).to(
+                    self.device
+                )
+                
             else:
                 self.obs_normalizer = EmpiricalNormalization(shape=[num_obs], until=1.0e8).to(self.device)
                 self.privileged_obs_normalizer = EmpiricalNormalization(shape=[num_privileged_obs], until=1.0e8).to(
