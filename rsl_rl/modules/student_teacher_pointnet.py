@@ -207,6 +207,7 @@ class StudentPointNetMLP(nn.Module):
         encoder_layers.append(activation_function)
         for layer_idx in range(len(encoder_lidar_dims)):
             if layer_idx == len(encoder_lidar_dims) - 1:
+                encoder_layers.append(nn.LayerNorm(encoder_lidar_dims[layer_idx]))
                 continue
             encoder_layers.append(nn.Linear(encoder_lidar_dims[layer_idx], encoder_lidar_dims[layer_idx + 1]))
             encoder_layers.append(activation_function)
