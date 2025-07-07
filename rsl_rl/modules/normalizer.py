@@ -48,11 +48,7 @@ class EmpiricalNormalization(nn.Module):
 
         Returns:
             ndarray or Variable: Normalized output values
-        """
-        if x.size(1) == self.shape:
-            # Avoids separating the input into two parts if the input is only the scaled part
-            return self._forward(x)
-        
+        """        
         x_scaled = x[:, :self.shape]
         x_rest = x[:, self.shape:]
         if self.training:
@@ -60,11 +56,11 @@ class EmpiricalNormalization(nn.Module):
         x_scaled = (x_scaled - self._mean) / (self._std + self.eps)
         return torch.cat((x_scaled, x_rest), dim=1)
     
-    def _forward(self, x):
-        """Normalize mean and variance of values based on empirical values."""
-        if self.training:
-            self.update(x)
-        return (x - self._mean) / (self._std + self.eps)
+    # def _forward(self, x):
+    #     """Normalize mean and variance of values based on empirical values."""
+    #     if self.training:
+    #         self.update(x)
+    #     return (x - self._mean) / (self._std + self.eps)
     
     @torch.jit.unused
     def update(self, x):
