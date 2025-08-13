@@ -8,6 +8,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 from torch.distributions import Normal
+from typing import List
 
 class StudentTeacherPointNet(nn.Module):
     is_recurrent = False
@@ -19,7 +20,7 @@ class StudentTeacherPointNet(nn.Module):
         num_actions,
         encoder_lidar_dims=[64, 32, 32],
         student_hidden_dims=[400, 200],
-        init_noise_std=0.1,
+        init_noise_std: float | List = 0.1,
         proprioception_space_student=None,
         lidar_space_student=None,
         proprioception_space_teacher=None,
@@ -53,7 +54,13 @@ class StudentTeacherPointNet(nn.Module):
         print(f"Teacher MLP: {self.teacher}")
 
         # action noise
-        self.std = nn.Parameter(init_noise_std * torch.ones(num_actions))
+        if isinstance(init_noise_std, list):
+            if len(init_noise_std) != num_actions:
+                raise ValueError(f"init_noise_std should be a scalar or a list of length {num_actions}")
+            self.std = nn.Parameter(torch.tensor(init_noise_std, dtype=torch.float32))
+        else:
+            self.std = nn.Parameter(init_noise_std * torch.ones(num_actions))
+            
         self.distribution = None
         # disable args validation for speedup
         Normal.set_default_validate_args = False
