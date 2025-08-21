@@ -136,13 +136,11 @@ class AgentPointNetMLP(nn.Module):
         self.pointnet = PointNetEncoder(latent_dim=latent_dim)
         
         self.mlp = nn.Sequential(
-            nn.Linear(input_size + latent_dim, 128),
+            nn.Linear(input_size + latent_dim, 400),
             nn.ELU(),
-            nn.Linear(128, 128),
+            nn.Linear(400, 200),
             nn.ELU(),
-            nn.Linear(128, 64),
-            nn.ELU(),
-            nn.Linear(64, output_size)
+            nn.Linear(200, output_size)
         )
     
     def forward(self, x):
