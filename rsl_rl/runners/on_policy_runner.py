@@ -22,6 +22,7 @@ from rsl_rl.modules import (
     StudentTeacher,
     StudentTeacherRecurrent,
     StudentTeacherPointNet,
+    StudentTeacherRecurrentPointNet,
 )
 from rsl_rl.utils import store_code_state
 
@@ -112,7 +113,7 @@ class OnPolicyRunner:
                     self.device
                 )
             
-            elif isinstance(self.alg.policy, (StudentTeacherPointNet)):
+            elif isinstance(self.alg.policy, (StudentTeacherPointNet, StudentTeacherRecurrentPointNet)):
                 self.obs_normalizer = EmpiricalNormalization(shape=[num_obs], until=1.0e8).to(self.device)
                 obs_privileged_size = self.alg.policy.teacher.input_size
                 self.privileged_obs_normalizer = EmpiricalNormalization(shape=[obs_privileged_size], until=3.0e8).to(
